@@ -183,6 +183,10 @@
           </array>
         </config-file>
 
+        <config-file target="*-Info.plist" parent="NSUserTrackingUsageDescription">
+            <string>This identifier will be used to deliver personalized ads and improve your app experience.</string>
+        </config-file>
+
         <!-- Facebook SDK -->
         <podspec>
             <config>
