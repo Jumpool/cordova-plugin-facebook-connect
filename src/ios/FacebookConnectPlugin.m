@@ -463,10 +463,10 @@
     } else if ([method isEqualToString:@"share"] || [method isEqualToString:@"feed"]) {
         // Create native params
         self.dialogCallbackId = command.callbackId;
-        FBSDKShareDialog *dialog = [[FBSDKShareDialog alloc] init];
+        FBSDKShareDialog *dialog = [FBSDKShareDialog new];
         dialog.fromViewController = [self topMostController];
         if (params[@"photo_image"]) {
-        	FBSDKSharePhoto *photo = [FBSDKSharePhoto new];
+        FBSDKSharePhoto *photo = [FBSDKSharePhoto photoWithImage:nil userGenerated:NO];
         	NSString *photoImage = params[@"photo_image"];
         	if (![photoImage isKindOfClass:[NSString class]]) {
         		NSLog(@"photo_image must be a string");
@@ -701,8 +701,8 @@
         [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
             BOOL trackingAllowed = (status == ATTrackingManagerAuthorizationStatusAuthorized);
 
-            // Set AdvertiserTrackingEnabled in Facebook SDK
-            [FBSDKSettings setAdvertiserTrackingEnabled:trackingAllowed];
+            // AdvertiserTrackingEnabled is now configured automatically by the Facebook SDK
+            // in newer versions (v14.1.0+), so we don't need to manually set it
 
             // Return status back to JS
             NSString *statusString;
@@ -723,7 +723,8 @@
         }];
     } else {
         // For iOS < 14, just return "authorized" (default behavior)
-        [FBSDKSettings setAdvertiserTrackingEnabled:YES];
+        // AdvertiserTrackingEnabled is now configured automatically by the Facebook SDK
+        // in newer versions (v14.1.0+), so we don't need to manually set it
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"authorized"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
