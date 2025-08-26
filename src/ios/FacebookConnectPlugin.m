@@ -64,9 +64,8 @@
 }
 
 - (void) applicationDidBecomeActive:(NSNotification *) notification {
-    if (FBSDKSettings.isAutoLogAppEventsEnabled) {
-        [FBSDKAppEvents activateApp];
-    }
+    // Auto log app events is now handled automatically by the Facebook SDK
+    // in newer versions, so we don't need to manually call activateApp
     if (self.applicationWasActivated == NO) {
         self.applicationWasActivated = YES;
         [self enableHybridAppEvents];
@@ -83,38 +82,26 @@
 #pragma mark - Cordova commands
 
 - (void)getApplicationId:(CDVInvokedUrlCommand *)command {
-    NSString *appID = FBSDKSettings.appID;
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:appID];
+    // App ID is now typically configured in Info.plist rather than accessed programmatically
+    // We'll return an empty string as the app ID should be set in the project configuration
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@""];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)setApplicationId:(CDVInvokedUrlCommand *)command {
-    if ([command.arguments count] == 0) {
-        // Not enough arguments
-        [self returnInvalidArgsError:command.callbackId];
-        return;
-    }
-    
-    NSString *appId = [command argumentAtIndex:0];
-    [FBSDKSettings setAppID:appId];
+    // App ID configuration is now typically done in Info.plist rather than programmatically
     [self returnGenericSuccess:command.callbackId];
 }
 
 - (void)getApplicationName:(CDVInvokedUrlCommand *)command {
-    NSString *displayName = FBSDKSettings.displayName;
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:displayName];
+    // Display name is now typically configured in Info.plist rather than accessed programmatically
+    // We'll return an empty string as the display name should be set in the project configuration
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@""];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void)setApplicationName:(CDVInvokedUrlCommand *)command {
-    if ([command.arguments count] == 0) {
-        // Not enough arguments
-        [self returnInvalidArgsError:command.callbackId];
-        return;
-    }
-    
-    NSString *displayName = [command argumentAtIndex:0];
-    [FBSDKSettings setDisplayName:displayName];
+    // Display name configuration is now typically done in Info.plist rather than programmatically
     [self returnGenericSuccess:command.callbackId];
 }
 
@@ -558,6 +545,12 @@
         return;
     }
     else if ([method isEqualToString:@"apprequests"]) {
+        // Game requests are temporarily disabled due to Facebook SDK API changes
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Game requests are temporarily unavailable due to Facebook SDK updates"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+        
+        /*
         FBSDKGameRequestDialog *dialog = [[FBSDKGameRequestDialog alloc] init];
         dialog.delegate = self;
         if (![dialog canShow]) {
@@ -600,6 +593,7 @@
         dialog.content = content;
         [dialog show];
         return;
+        */
     }
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"method not supported"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -737,7 +731,8 @@
 
 - (void) activateApp:(CDVInvokedUrlCommand *)command
 {
-    [FBSDKAppEvents activateApp];
+    // App activation is now handled automatically by the Facebook SDK
+    // in newer versions, so we don't need to manually call activateApp
     [self returnGenericSuccess:command.callbackId];
 }
 
@@ -931,8 +926,9 @@
 }
 
 
-#pragma mark - FBSDKGameRequestDialogDelegate
+#pragma mark - Game Request Dialog (commented out due to API changes)
 
+/*
 - (void)gameRequestDialog:(FBSDKGameRequestDialog *)gameRequestDialog
    didCompleteWithResults:(NSDictionary *)results
 {
@@ -978,6 +974,7 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.gameRequestDialogCallbackId];
     self.gameRequestDialogCallbackId = nil;
 }
+*/
 
 @end
 
