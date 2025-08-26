@@ -85,7 +85,7 @@ public class ConnectPlugin extends CordovaPlugin {
 
     @Override
     protected void pluginInitialize() {
-        FacebookSdk.sdkInitialize(cordova.getActivity().getApplicationContext());
+        // Facebook SDK is now auto-initialized, no need for sdkInitialize()
 
         // create callbackManager
         callbackManager = CallbackManager.Factory.create();
@@ -247,14 +247,15 @@ public class ConnectPlugin extends CordovaPlugin {
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
-        // Developers can observe how frequently users activate their app by logging an app activation event.
-        AppEventsLogger.activateApp(cordova.getActivity().getApplication());
+        // App activation events are now automatically tracked by the Facebook SDK
+        // No need to manually call activateApp() in newer versions
     }
 
     @Override
     public void onPause(boolean multitasking) {
         super.onPause(multitasking);
-        AppEventsLogger.deactivateApp(cordova.getActivity().getApplication());
+        // App deactivation events are now automatically tracked by the Facebook SDK
+        // No need to manually call deactivateApp() in newer versions
     }
 
     @Override
@@ -364,16 +365,6 @@ public class ConnectPlugin extends CordovaPlugin {
             return true;
         } else if (action.equals("getDeferredApplink")) {
             executeGetDeferredApplink(args, callbackContext);
-            return true;
-        } else if (action.equals("activateApp")) {
-            cordova.getThreadPool().execute(new Runnable() {
-                @Override
-                public void run() {
-                    AppEventsLogger.activateApp(cordova.getActivity().getApplication());
-                    callbackContext.success();
-                }
-            });
-
             return true;
         }
         return false;
@@ -633,15 +624,18 @@ public class ConnectPlugin extends CordovaPlugin {
         JSONArray arr = args.getJSONArray(0);
         String[] options = new String[arr.length()];
         for (int i = 0; i < arr.length(); i++) {
-            options[i + 1] = arr.getString(i);
+            options[i] = arr.getString(i);
         }
 
         if (args.length() == 1) {
             FacebookSdk.setDataProcessingOptions(options);
-        } else {
+        } else if (args.length() == 2) {
+            String country = args.getString(1);
+            FacebookSdk.setDataProcessingOptions(options, country);
+        } else if (args.length() >= 3) {
             String country = args.getString(1);
             String state = args.getString(2);
-            FacebookSdk.setDataProcessingOptions(options);
+            FacebookSdk.setDataProcessingOptions(options, country, state);
         }
         callbackContext.success();
     }
@@ -849,13 +843,15 @@ public class ConnectPlugin extends CordovaPlugin {
             int enableHybridAppEventsId = res.getIdentifier("fb_hybrid_app_events", "bool", appContext.getPackageName());
             boolean enableHybridAppEvents = enableHybridAppEventsId != 0 && res.getBoolean(enableHybridAppEventsId);
             if (enableHybridAppEvents) {
+                // Note: augmentWebView may be deprecated in newer Facebook SDK versions
+                // Hybrid app events functionality may need alternative implementation
                 AppEventsLogger.augmentWebView((WebView) this.webView.getView(), appContext);
                 Log.d(TAG, "FB Hybrid app events are enabled");
             } else {
                 Log.d(TAG, "FB Hybrid app events are not enabled");
             }
         } catch (Exception e) {
-            Log.d(TAG, "FB Hybrid app events cannot be enabled");
+            Log.d(TAG, "FB Hybrid app events cannot be enabled: " + e.getMessage());
         }
     }
 
