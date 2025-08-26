@@ -11,6 +11,11 @@
 //
 
 #import "FacebookConnectPlugin.h"
+
+#import <AppTrackingTransparency/AppTrackingTransparency.h>
+#import <AdSupport/AdSupport.h>
+#import <FBSDKCoreKit/FBSDKCoreKit.h>
+
 #import <objc/runtime.h>
 
 @interface FacebookConnectPlugin ()
@@ -1021,4 +1026,42 @@ void FBMethodSwizzle(Class c, SEL originalSelector) {
 {
     return NO;
 }
+
+
+
+// New method: request App Tracking Transparency
+- (void)requestTrackingAuthorization:(CDVInvokedUrlCommand*)command {
+    if (@available(iOS 14, *)) {
+        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
+            BOOL trackingAllowed = (status == ATTrackingManagerAuthorizationStatusAuthorized);
+
+            // Set AdvertiserTrackingEnabled in Facebook SDK
+            [FBSDKSettings setAdvertiserTrackingEnabled:trackingAllowed];
+
+            // Return status back to JS
+            NSString *statusString;
+            switch (status) {
+                case ATTrackingManagerAuthorizationStatusAuthorized:
+                    statusString = @"authorized"; break;
+                case ATTrackingManagerAuthorizationStatusDenied:
+                    statusString = @"denied"; break;
+                case ATTrackingManagerAuthorizationStatusRestricted:
+                    statusString = @"restricted"; break;
+                case ATTrackingManagerAuthorizationStatusNotDetermined:
+                default:
+                    statusString = @"notDetermined"; break;
+            }
+
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:statusString];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+    } else {
+        // For iOS < 14, just return "authorized" (default behavior)
+        [FBSDKSettings setAdvertiserTrackingEnabled:YES];
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"authorized"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+}
+
+
 @end
