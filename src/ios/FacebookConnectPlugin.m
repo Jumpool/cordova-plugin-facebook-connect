@@ -471,8 +471,8 @@
         if (params[@"photo_image"]) {
         // FBSDKSharePhoto initialization - Facebook SDK v14+ requires different approach
         // Create photo content directly without using deprecated initialization
-        FBSDKSharePhoto *photo = [[FBSDKSharePhoto alloc] initWithImage:nil userGenerated:NO];
-        photo.userGenerated = NO;
+        FBSDKSharePhoto *photo = [[FBSDKSharePhoto alloc] initWithImage:nil isUserGenerated:NO];
+        photo.isUserGenerated = NO;
         	NSString *photoImage = params[@"photo_image"];
         	if (![photoImage isKindOfClass:[NSString class]]) {
         		NSLog(@"photo_image must be a string");
@@ -1025,5 +1025,9 @@ void FBMethodSwizzle(Class c, SEL originalSelector) {
 {
     return NO;
 }
+
+
+
+
 
 @end
