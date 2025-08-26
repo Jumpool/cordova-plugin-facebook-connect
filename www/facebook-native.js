@@ -146,3 +146,8 @@ exports.getDeferredApplink = function (s, f) {
 exports.activateApp = function (s, f) {
   exec(s, f, 'FacebookConnectPlugin', 'activateApp', [])
 }
+
+// Request iOS App Tracking Transparency authorization
+exports.requestTrackingAuthorization = function(success, failure) {
+  exec(success, failure, "FacebookConnectPlugin", "requestTrackingAuthorization", []);
+};
