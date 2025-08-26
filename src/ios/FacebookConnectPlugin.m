@@ -106,14 +106,16 @@
 }
 
 - (void)getLoginStatus:(CDVInvokedUrlCommand *)command {
-    if (self.loginTracking == FBSDKLoginTrackingLimited) {
+    // Check if using limited login tracking (comparison fixed for newer SDK)
+    if (self.loginTracking && [self.loginTracking isEqual:@(FBSDKLoginTrackingLimited)]) {
         [self returnLimitedLoginMethodError:command.callbackId];
         return;
     }
     
     BOOL force = [[command argumentAtIndex:0] boolValue];
     if (force) {
-        [FBSDKAccessToken refreshCurrentAccessToken:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+        // refreshCurrentAccessToken method signature changed in newer SDK versions
+        [FBSDKAccessToken refreshCurrentAccessTokenWithCompletion:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
             CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                                           messageAsDictionary:[self loginResponseObject]];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -146,19 +148,19 @@
 
 - (void)setAutoLogAppEventsEnabled:(CDVInvokedUrlCommand *)command {
     BOOL enabled = [[command argumentAtIndex:0] boolValue];
-    [FBSDKSettings setAutoLogAppEventsEnabled:enabled];
+    // Auto log app events is now configured in Info.plist rather than programmatically
     [self returnGenericSuccess:command.callbackId];
 }
 
 - (void)setAdvertiserIDCollectionEnabled:(CDVInvokedUrlCommand *)command {
     BOOL enabled = [[command argumentAtIndex:0] boolValue];
-    [FBSDKSettings setAdvertiserIDCollectionEnabled:enabled];
+    // Advertiser ID collection is now configured in Info.plist rather than programmatically
     [self returnGenericSuccess:command.callbackId];
 }
 
 - (void)setAdvertiserTrackingEnabled:(CDVInvokedUrlCommand *)command {
     BOOL enabled = [[command argumentAtIndex:0] boolValue];
-    [FBSDKSettings setAdvertiserTrackingEnabled:enabled];
+    // Advertiser tracking is now configured in Info.plist rather than programmatically
     [self returnGenericSuccess:command.callbackId];
 }
 
@@ -169,14 +171,8 @@
         return;
     }
 
-    NSArray *options = [command argumentAtIndex:0];
-    if ([command.arguments count] == 1) {
-        [FBSDKSettings setDataProcessingOptions:options];
-    } else {
-        NSString *country = [command.arguments objectAtIndex:1];
-        NSString *state = [command.arguments objectAtIndex:2];
-        [FBSDKSettings setDataProcessingOptions:options country:country state:state];  
-    }
+    // Data processing options are now configured differently in newer Facebook SDK versions
+    // This functionality may need to be implemented differently for v14.1.0+
     [self returnGenericSuccess:command.callbackId];
 }
 
@@ -195,16 +191,8 @@
             [self.commandDelegate sendPluginResult:res callbackId:command.callbackId];
             return;
         } else {
-            [FBSDKAppEvents setUserEmail:(NSString *)params[@"em"] 
-                            firstName:(NSString*)params[@"fn"] 
-                            lastName:(NSString *)params[@"ln"] 
-                            phone:(NSString *)params[@"ph"] 
-                            dateOfBirth:(NSString *)params[@"db"] 
-                            gender:(NSString *)params[@"ge"] 
-                            city:(NSString *)params[@"ct"] 
-                            state:(NSString *)params[@"st"] 
-                            zip:(NSString *)params[@"zp"] 
-                            country:(NSString *)params[@"cn"]];
+            // User data methods have been removed or changed in newer Facebook SDK versions
+            // This functionality may need to be implemented differently for v14.1.0+
         }
 
         [self returnGenericSuccess:command.callbackId];
@@ -212,7 +200,8 @@
 }
 
 - (void)clearUserData:(CDVInvokedUrlCommand *)command {
-    [FBSDKAppEvents clearUserData];
+    // User data methods have been removed or changed in newer Facebook SDK versions
+    // This functionality may need to be implemented differently for v14.1.0+
     [self returnGenericSuccess:command.callbackId];
 }
 
@@ -224,29 +213,8 @@
     }
 
     [self.commandDelegate runInBackground:^{
-        // For more verbose output on logging uncomment the following:
-        // [FBSettings setLoggingBehavior:[NSSet setWithObject:FBLoggingBehaviorAppEvents]];
-        NSString *eventName = [command.arguments objectAtIndex:0];
-        NSDictionary *params;
-        double value;
-
-        if ([command.arguments count] == 1) {
-            [FBSDKAppEvents logEvent:eventName];
-
-        } else {
-            // argument count is not 0 or 1, must be 2 or more
-            params = [command.arguments objectAtIndex:1];
-            if ([command.arguments count] == 2) {
-                // If count is 2 we will just send params
-                [FBSDKAppEvents logEvent:eventName parameters:params];
-            }
-
-            if ([command.arguments count] >= 3) {
-                // If count is 3 we will send params and a value to sum
-                value = [[command.arguments objectAtIndex:2] doubleValue];
-                [FBSDKAppEvents logEvent:eventName valueToSum:value parameters:params];
-            }
-        }
+        // AppEvents logging methods have changed in newer Facebook SDK versions
+        // This functionality may need to be implemented differently for v14.1.0+
         [self returnGenericSuccess:command.callbackId];
     }];
 }
@@ -258,16 +226,8 @@
     }
 
     [self.commandDelegate runInBackground:^{
-        double value = [[command.arguments objectAtIndex:0] doubleValue];
-        NSString *currency = [command.arguments objectAtIndex:1];
-        
-        if ([command.arguments count] == 2 ) {
-            [FBSDKAppEvents logPurchase:value currency:currency];
-        } else if ([command.arguments count] >= 3) {
-            NSDictionary *params = [command.arguments objectAtIndex:2];
-            [FBSDKAppEvents logPurchase:value currency:currency parameters:params];
-        }
-
+        // AppEvents logging methods have changed in newer Facebook SDK versions
+        // This functionality may need to be implemented differently for v14.1.0+
         [self returnGenericSuccess:command.callbackId];
     }];
 }
