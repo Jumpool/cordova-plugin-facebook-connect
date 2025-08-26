@@ -630,12 +630,22 @@ public class ConnectPlugin extends CordovaPlugin {
         if (args.length() == 1) {
             FacebookSdk.setDataProcessingOptions(options);
         } else if (args.length() == 2) {
-            String country = args.getString(1);
-            FacebookSdk.setDataProcessingOptions(options, country);
+            try {
+                int country = Integer.parseInt(args.getString(1));
+                FacebookSdk.setDataProcessingOptions(options, country, 0);
+            } catch (NumberFormatException e) {
+                callbackContext.error("Country code must be a valid integer");
+                return;
+            }
         } else if (args.length() >= 3) {
-            String country = args.getString(1);
-            String state = args.getString(2);
-            FacebookSdk.setDataProcessingOptions(options, country, state);
+            try {
+                int country = Integer.parseInt(args.getString(1));
+                int state = Integer.parseInt(args.getString(2));
+                FacebookSdk.setDataProcessingOptions(options, country, state);
+            } catch (NumberFormatException e) {
+                callbackContext.error("Country and state codes must be valid integers");
+                return;
+            }
         }
         callbackContext.success();
     }
