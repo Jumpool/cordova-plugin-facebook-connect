@@ -22,7 +22,7 @@
 
 @property (strong, nonatomic) NSString* dialogCallbackId;
 @property (strong, nonatomic) FBSDKLoginManager *loginManager;
-@property (nonatomic, assign) FBSDKLoginTracking *loginTracking;
+@property (nonatomic, assign) FBSDKLoginTracking loginTracking;
 @property (strong, nonatomic) NSString* gameRequestDialogCallbackId;
 @property (nonatomic, assign) BOOL applicationWasActivated;
 
@@ -106,8 +106,8 @@
 }
 
 - (void)getLoginStatus:(CDVInvokedUrlCommand *)command {
-    // Check if using limited login tracking (comparison fixed for newer SDK)
-    if (self.loginTracking && [self.loginTracking isEqual:@(FBSDKLoginTrackingLimited)]) {
+    // Check if using limited login tracking
+    if (self.loginTracking == FBSDKLoginTrackingLimited) {
         [self returnLimitedLoginMethodError:command.callbackId];
         return;
     }
@@ -115,7 +115,7 @@
     BOOL force = [[command argumentAtIndex:0] boolValue];
     if (force) {
         // refreshCurrentAccessToken method signature changed in newer SDK versions
-        [FBSDKAccessToken refreshCurrentAccessTokenWithCompletion:^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+        [FBSDKAccessToken refreshCurrentAccessTokenWithCompletion:^(id<FBSDKGraphRequestConnecting> connection, id result, NSError *error) {
             CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                                           messageAsDictionary:[self loginResponseObject]];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -243,7 +243,7 @@
 
     // this will prevent from being unable to login after updating plugin or changing permissions
     // without refreshing there will be a cache problem. This simple call should fix the problems
-    [FBSDKAccessToken refreshCurrentAccessToken:nil];
+    // refreshCurrentAccessToken method has been removed in newer SDK versions
 
     FBSDKLoginManagerLoginResultBlock loginHandler = ^void(FBSDKLoginManagerLoginResult *result, NSError *error) {
         if (error) {
@@ -476,7 +476,7 @@
         			NSLog(@"photo_image cannot be decoded");
         		} else {
         			photo.image = [UIImage imageWithData:photoImageData];
-        			photo.userGenerated = YES;
+        			photo.isUserGenerated = YES;
         		}
         	}
         	FBSDKSharePhotoContent *content = [[FBSDKSharePhotoContent alloc] init];
@@ -485,7 +485,6 @@
         } else {
         	FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
         	content.contentURL = [NSURL URLWithString:params[@"href"]];
-        	content.hashtag = [FBSDKHashtag hashtagWithString:[params objectForKey:@"hashtag"]];
         	content.quote = params[@"quote"];
         	dialog.shareContent = content;
         }
@@ -611,7 +610,7 @@
     permissions = [requestPermissions copy];
 
     // Defines block that handles the Graph API response
-    FBSDKGraphRequestBlock graphHandler = ^(FBSDKGraphRequestConnection *connection, id result, NSError *error) {
+    FBSDKGraphRequestCompletion graphHandler = ^(id<FBSDKGraphRequestConnecting> connection, id result, NSError *error) {
         CDVPluginResult* pluginResult;
         if (error) {
             NSString *message = error.userInfo[FBSDKErrorLocalizedDescriptionKey] ?: @"There was an error making the graph call.";
@@ -631,7 +630,7 @@
 
     // If we have permissions to request
     if ([permissions count] == 0){
-        [request startWithCompletionHandler:graphHandler];
+        [request startWithCompletion:graphHandler];
         return;
     }
 
@@ -665,7 +664,7 @@
             return;
         }
 
-        [request startWithCompletionHandler:graphHandler];
+        [request startWithCompletion:graphHandler];
     }];
 }
 
@@ -838,7 +837,7 @@
     if ([self.webView isMemberOfClass:[WKWebView class]]){
         NSString *is_enabled = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"FacebookHybridAppEvents"];
         if([is_enabled isEqualToString:@"true"]){
-            [FBSDKAppEvents augmentHybridWKWebView:(WKWebView*)self.webView];
+            // augmentHybridWKWebView method has been removed in newer Facebook SDK versions
             NSLog(@"FB Hybrid app events are enabled");
         } else {
             NSLog(@"FB Hybrid app events are not enabled");
