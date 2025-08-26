@@ -453,7 +453,7 @@
     if ([method isEqualToString:@"send"]) {
         // Send private message dialog
         // Create native params
-        FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
+        FBSDKShareLinkContent *content = [FBSDKShareLinkContent new];
         content.contentURL = [NSURL URLWithString:[params objectForKey:@"link"]];
 
         self.dialogCallbackId = command.callbackId;
@@ -466,7 +466,7 @@
         FBSDKShareDialog *dialog = [[FBSDKShareDialog alloc] init];
         dialog.fromViewController = [self topMostController];
         if (params[@"photo_image"]) {
-        	FBSDKSharePhoto *photo = [[FBSDKSharePhoto alloc] init];
+        	FBSDKSharePhoto *photo = [FBSDKSharePhoto new];
         	NSString *photoImage = params[@"photo_image"];
         	if (![photoImage isKindOfClass:[NSString class]]) {
         		NSLog(@"photo_image must be a string");
@@ -479,11 +479,11 @@
         			photo.isUserGenerated = YES;
         		}
         	}
-        	FBSDKSharePhotoContent *content = [[FBSDKSharePhotoContent alloc] init];
+        	FBSDKSharePhotoContent *content = [FBSDKSharePhotoContent new];
         	content.photos = @[photo];
         	dialog.shareContent = content;
         } else {
-        	FBSDKShareLinkContent *content = [[FBSDKShareLinkContent alloc] init];
+        	FBSDKShareLinkContent *content = [FBSDKShareLinkContent new];
         	content.contentURL = [NSURL URLWithString:params[@"href"]];
         	content.quote = params[@"quote"];
         	dialog.shareContent = content;
@@ -693,6 +693,40 @@
     // App activation is now handled automatically by the Facebook SDK
     // in newer versions, so we don't need to manually call activateApp
     [self returnGenericSuccess:command.callbackId];
+}
+
+// New method: request App Tracking Transparency
+- (void)requestTrackingAuthorization:(CDVInvokedUrlCommand*)command {
+    if (@available(iOS 14, *)) {
+        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
+            BOOL trackingAllowed = (status == ATTrackingManagerAuthorizationStatusAuthorized);
+
+            // Set AdvertiserTrackingEnabled in Facebook SDK
+            [FBSDKSettings setAdvertiserTrackingEnabled:trackingAllowed];
+
+            // Return status back to JS
+            NSString *statusString;
+            switch (status) {
+                case ATTrackingManagerAuthorizationStatusAuthorized:
+                    statusString = @"authorized"; break;
+                case ATTrackingManagerAuthorizationStatusDenied:
+                    statusString = @"denied"; break;
+                case ATTrackingManagerAuthorizationStatusRestricted:
+                    statusString = @"restricted"; break;
+                case ATTrackingManagerAuthorizationStatusNotDetermined:
+                default:
+                    statusString = @"notDetermined"; break;
+            }
+
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:statusString];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+    } else {
+        // For iOS < 14, just return "authorized" (default behavior)
+        [FBSDKSettings setAdvertiserTrackingEnabled:YES];
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"authorized"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
 }
 
 #pragma mark - Utility methods
@@ -985,39 +1019,6 @@ void FBMethodSwizzle(Class c, SEL originalSelector) {
 
 
 
-// New method: request App Tracking Transparency
-- (void)requestTrackingAuthorization:(CDVInvokedUrlCommand*)command {
-    if (@available(iOS 14, *)) {
-        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
-            BOOL trackingAllowed = (status == ATTrackingManagerAuthorizationStatusAuthorized);
-
-            // Set AdvertiserTrackingEnabled in Facebook SDK
-            [FBSDKSettings setAdvertiserTrackingEnabled:trackingAllowed];
-
-            // Return status back to JS
-            NSString *statusString;
-            switch (status) {
-                case ATTrackingManagerAuthorizationStatusAuthorized:
-                    statusString = @"authorized"; break;
-                case ATTrackingManagerAuthorizationStatusDenied:
-                    statusString = @"denied"; break;
-                case ATTrackingManagerAuthorizationStatusRestricted:
-                    statusString = @"restricted"; break;
-                case ATTrackingManagerAuthorizationStatusNotDetermined:
-                default:
-                    statusString = @"notDetermined"; break;
-            }
-
-            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:statusString];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        }];
-    } else {
-        // For iOS < 14, just return "authorized" (default behavior)
-        [FBSDKSettings setAdvertiserTrackingEnabled:YES];
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"authorized"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }
-}
 
 
 @end
