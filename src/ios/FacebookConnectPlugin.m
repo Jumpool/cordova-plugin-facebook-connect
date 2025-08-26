@@ -463,10 +463,16 @@
     } else if ([method isEqualToString:@"share"] || [method isEqualToString:@"feed"]) {
         // Create native params
         self.dialogCallbackId = command.callbackId;
-        FBSDKShareDialog *dialog = [FBSDKShareDialog new];
+        // FBSDKShareDialog initialization - Facebook SDK v14+ requires different approach
+        // The dialog is now created using the showFromViewController method directly
+        // We'll create the content first, then show the dialog
+        FBSDKShareDialog *dialog = [[FBSDKShareDialog alloc] initWithViewController:[self topMostController] content:nil delegate:nil];
         dialog.fromViewController = [self topMostController];
         if (params[@"photo_image"]) {
-        FBSDKSharePhoto *photo = [FBSDKSharePhoto photoWithImage:nil userGenerated:NO];
+        // FBSDKSharePhoto initialization - Facebook SDK v14+ requires different approach
+        // Create photo content directly without using deprecated initialization
+        FBSDKSharePhoto *photo = [[FBSDKSharePhoto alloc] initWithImage:nil userGenerated:NO];
+        photo.userGenerated = NO;
         	NSString *photoImage = params[@"photo_image"];
         	if (![photoImage isKindOfClass:[NSString class]]) {
         		NSLog(@"photo_image must be a string");
@@ -703,6 +709,7 @@
 
             // AdvertiserTrackingEnabled is now configured automatically by the Facebook SDK
             // in newer versions (v14.1.0+), so we don't need to manually set it
+            // The setAdvertiserTrackingEnabled method has been removed in newer SDK versions
 
             // Return status back to JS
             NSString *statusString;
@@ -725,6 +732,7 @@
         // For iOS < 14, just return "authorized" (default behavior)
         // AdvertiserTrackingEnabled is now configured automatically by the Facebook SDK
         // in newer versions (v14.1.0+), so we don't need to manually set it
+        // The setAdvertiserTrackingEnabled method has been removed in newer SDK versions
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"authorized"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
@@ -1017,9 +1025,5 @@ void FBMethodSwizzle(Class c, SEL originalSelector) {
 {
     return NO;
 }
-
-
-
-
 
 @end
