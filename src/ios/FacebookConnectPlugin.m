@@ -212,9 +212,37 @@
         return;
     }
 
+    NSString *eventName = [command.arguments objectAtIndex:0];
+    NSDictionary *params = nil;
+    NSNumber *valueToSum = nil;
+
+    if ([command.arguments count] > 1) {
+        id arg1 = [command.arguments objectAtIndex:1];
+        if ([arg1 isKindOfClass:[NSDictionary class]]) {
+            params = (NSDictionary *)arg1;
+        }
+    }
+
+    if ([command.arguments count] > 2) {
+        id arg2 = [command.arguments objectAtIndex:2];
+        if ([arg2 isKindOfClass:[NSNumber class]]) {
+            valueToSum = (NSNumber *)arg2;
+        }
+    }
+
     [self.commandDelegate runInBackground:^{
         // AppEvents logging methods have changed in newer Facebook SDK versions
         // This functionality may need to be implemented differently for v14.1.0+
+        if (valueToSum) {
+            [[FBSDKAppEvents shared] logEvent:eventName
+                                   valueToSum:[valueToSum doubleValue]
+                                   parameters:params];
+        } else if (params) {
+            [[FBSDKAppEvents shared] logEvent:eventName parameters:params];
+        } else {
+            [[FBSDKAppEvents shared] logEvent:eventName];
+        }
+
         [self returnGenericSuccess:command.callbackId];
     }];
 }
@@ -1025,9 +1053,5 @@ void FBMethodSwizzle(Class c, SEL originalSelector) {
 {
     return NO;
 }
-
-
-
-
 
 @end
