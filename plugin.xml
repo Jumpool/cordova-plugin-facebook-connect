@@ -13,7 +13,7 @@
       Cordova application as you use in your web application.
     </description>
 
-    <repo>https://github.com/cordova-plugin-facebook-connect/cordova-plugin-facebook-connect</repo>
+    <repo>https://github.com/Jumpool/cordova-plugin-facebook-connect</repo>
 
     <license>Apache 2.0</license>
 
@@ -25,8 +25,8 @@
     <preference name="FACEBOOK_HYBRID_APP_EVENTS" default="false" />
     <preference name="FACEBOOK_ADVERTISER_ID_COLLECTION" default="true" />
     <preference name="FACEBOOK_ANDROID_SDK_VERSION" default="18.0.0"/>
-    <preference name="FACEBOOK_IOS_SDK_VERSION" default="14.1.0"/>
-    <preference name="FACEBOOK_BROWSER_SDK_VERSION" default="v14.0" />
+    <preference name="FACEBOOK_IOS_SDK_VERSION" default="18.0.0"/>
+    <preference name="FACEBOOK_BROWSER_SDK_VERSION" default="v18.0" />
 
     <engines>
         <engine name="cordova-android" version=">=9.0.0" />
